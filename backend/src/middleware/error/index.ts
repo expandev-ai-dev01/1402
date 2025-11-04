@@ -1,0 +1,45 @@
+/**
+ * @summary Error handling middleware
+ * @module middleware/error
+ */
+
+import { Request, Response, NextFunction } from 'express';
+
+/**
+ * @summary Global error handling middleware
+ * @function errorMiddleware
+ *
+ * @param {Error} error - Error object
+ * @param {Request} req - Express request object
+ * @param {Response} res - Express response object
+ * @param {NextFunction} next - Express next function
+ */
+export async function errorMiddleware(
+  error: any,
+  req: Request,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  const statusCode = error.statusCode || 500;
+  const message = error.message || 'Internal Server Error';
+
+  console.error('Error:', {
+    statusCode,
+    message,
+    stack: error.stack,
+    path: req.path,
+    method: req.method,
+  });
+
+  res.status(statusCode).json({
+    success: false,
+    error: {
+      code: error.code || 'INTERNAL_ERROR',
+      message: message,
+      ...(process.env.NODE_ENV === 'development' && { stack: error.stack }),
+    },
+    timestamp: new Date().toISOString(),
+  });
+}
+
+export default errorMiddleware;

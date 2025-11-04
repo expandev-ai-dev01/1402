@@ -1,0 +1,37 @@
+/**
+ * @hook useTaskCreate
+ * @summary Hook for creating tasks with mutation handling
+ * @domain task
+ * @type domain-hook
+ * @category data
+ *
+ * @description
+ * Manages task creation with TanStack Query mutation,
+ * providing loading states and error handling.
+ */
+
+import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { taskService } from '../../services/taskService';
+import type { UseTaskCreateOptions, UseTaskCreateReturn } from './types';
+
+export const useTaskCreate = (options: UseTaskCreateOptions = {}): UseTaskCreateReturn => {
+  const { onSuccess, onError } = options;
+  const queryClient = useQueryClient();
+
+  const mutation = useMutation({
+    mutationFn: taskService.create,
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ['tasks'] });
+      onSuccess?.(data);
+    },
+    onError: (error: Error) => {
+      onError?.(error);
+    },
+  });
+
+  return {
+    createTask: mutation.mutateAsync,
+    isCreating: mutation.isPending,
+    error: mutation.error,
+  };
+};
